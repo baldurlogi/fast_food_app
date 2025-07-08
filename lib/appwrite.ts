@@ -1,12 +1,17 @@
-import {Account, Avatars, Client, Databases, ID, Query} from "react-native-appwrite";
-import {CreateUserParams, SignInParams} from "@/type";
+import {Account, Avatars, Client, Databases, ID, Query, Storage} from "react-native-appwrite";
+import {CreateUserParams, GetMenuParams, SignInParams} from "@/type";
 
 export const appwriteConfig = {
     endpoint: process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT!,
     platform: "com.blg.foodapp",
     projectId: process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID!,
     databaseId: '686b6b900008731983ec',
+    bucketId: '686bd0db0032b8d85f44',
     userCollectionId: '686b6bd900124ef13e52',
+    categoriesCollectionId: '686bcd830037f1fdeb7a',
+    menuCollectionId: '686bce06001bddf6ddca',
+    customizationsCollectionId: '686bcf2d001304aee1ef',
+    menuCustomizationCollectionId: '686bcfed003b041f9039',
 }
 
 export const client = new Client();
@@ -18,6 +23,7 @@ client
 
 export const account = new Account(client);
 export const databases = new Databases(client);
+export const storage = new Storage(client);
 
 const avatars = new Avatars(client)
 
@@ -63,6 +69,38 @@ export const getCurrentUser = async () => {
         if(!currentUser) throw Error;
 
         return currentUser.documents[0];
+    } catch (error) {
+        throw new Error(error as string);
+    }
+}
+
+export const getMenu = async ({ category, query }: GetMenuParams) => {
+    try {
+        const queries: string[] = [];
+
+        if(category) queries.push(Query.equal('categories', category))
+        if(query) queries.push(Query.search('name', query))
+
+        const menus = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.menuCollectionId,
+            queries,
+        )
+
+        return menus.documents;
+    } catch (error) {
+        throw new Error(error as string);
+    }
+}
+
+export const getCategories = async () => {
+    try {
+        const categories = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.categoriesCollectionId,
+        )
+
+        return categories.documents;
     } catch (error) {
         throw new Error(error as string);
     }
